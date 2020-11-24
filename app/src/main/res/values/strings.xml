@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">My Album</string>
+    <string name="add_image_video_menu">Add Image/Video Menu</string>
+    <string name="pick_image_from_gallery">Pick Image From Gallery</string>
+    <string name="pick_image_capture">Pick Image Capture</string>
+    <string name="image_main">Image Main List</string>
+    <string name="icon_play">Icon For Play Video</string>
+    <string name="icon_back">Icon For Back</string>
+    <string name="app_need_permission">App Need Permission</string>
+    <string name="app_need_permission_msg">This app needs permission to use this feature. You can grant them in app settings.</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="error_req_permission">Error when request permission! %1$s</string>
+    <string name="choose">Choose</string>
+    <string name="error">Error!</string>
+    <string name="delete_confirm_title">Delete</string>
+    <string name="delete_confirm_msg">Are you sure want to delete this?</string>
+    <string name="no_media_available">No Media Available</string>
+</resources>
