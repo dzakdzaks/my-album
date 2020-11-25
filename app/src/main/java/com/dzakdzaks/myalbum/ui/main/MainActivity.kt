@@ -42,7 +42,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var mainAdapter: MainAdapter
 
-    private var isRotate: Boolean = false
+    private var isRotated: Boolean = false
     private lateinit var isFromWhere: String
 
     private lateinit var currentMediaPath: String
@@ -54,12 +54,51 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        initialize()
+        /*todo animation with View.animate*/
+        /*initialize()*/
+        /*todo animation with View.animate*/
+
         setupAlbumList()
         observeAllData()
+        clickable()
     }
 
-    private fun initialize() {
+    private fun clickable() {
+        binding.fabAdd.setOnClickListener {
+            isRotated = if (!isRotated) {
+                transitionFab(R.id.start, R.id.end)
+                true
+            } else {
+                transitionFab(R.id.end, R.id.start)
+                false
+            }
+        }
+
+        binding.fabCamera.setOnClickListener {
+            permissionCheckWhenClicked(Constant.TAKE_CAMERA)
+        }
+
+        binding.fabGallery.setOnClickListener {
+            permissionCheckWhenClicked(Constant.TAKE_GALLERY)
+        }
+
+    }
+
+    private fun transitionFab(start: Int, end: Int, duration: Int = 300) {
+        binding.motionLayout.setTransition(start, end)
+        binding.motionLayout.setTransitionDuration(duration)
+        binding.motionLayout.transitionToEnd()
+    }
+
+    private fun permissionCheckWhenClicked(isFromWhereValue: String) {
+        transitionFab(R.id.end, R.id.start)
+        isRotated = false
+        isFromWhere = isFromWhereValue
+        permissionCheck(isFromWhere)
+    }
+
+    /*todo animation with View.animate*/
+    /*private fun initialize() {
         binding.fabCamera.initFab()
         binding.fabGallery.initFab()
         clickable()
@@ -94,7 +133,8 @@ class MainActivity : AppCompatActivity() {
         isRotate = binding.fabAdd.rotateView(!isRotate)
         binding.fabCamera.hideWithAnim()
         binding.fabGallery.hideWithAnim()
-    }
+    }*/
+    /*todo animation with View.animate*/
 
     private fun permissionCheck(isFromWhere: String) {
         Dexter.withActivity(this)
