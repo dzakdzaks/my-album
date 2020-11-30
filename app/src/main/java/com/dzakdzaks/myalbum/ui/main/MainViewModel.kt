@@ -38,6 +38,6 @@ class MainViewModel @ViewModelInject constructor(
         }
     }
 
-    fun getAllData() = repository.getAllData().flowOn(Dispatchers.IO) .asLiveData()
+    fun getAllData() = repository.getAllData().flowOn(Dispatchers.IO)
 
 }

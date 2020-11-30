@@ -28,6 +28,7 @@ import com.karumi.dexter.listener.PermissionRequest
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.IOException
@@ -339,16 +340,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun observeAllData() {
-        viewModel.getAllData().observe(this@MainActivity, {
-            if (it.isEmpty() || it == null) {
-                binding.rv.gone()
-                binding.tvNoData.visible()
-            } else {
-                binding.tvNoData.gone()
-                binding.rv.visible()
-                mainAdapter.addAllData(it)
+        lifecycleScope.launch {
+            viewModel.getAllData().collect {
+                if (it.isEmpty()) {
+                    binding.rv.gone()
+                    binding.tvNoData.visible()
+                } else {
+                    binding.tvNoData.gone()
+                    binding.rv.visible()
+                    mainAdapter.addAllData(it)
+                }
             }
-        })
+        }
     }
 
 }
