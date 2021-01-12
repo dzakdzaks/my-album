@@ -144,7 +144,7 @@ object BitmapUtils {
      * @return The path of the saved image.
      */
     fun saveImage(context: Context, image: Bitmap): String? {
-        var savedImagePath: String? = null
+        var savedImagePath: String? = ""
 
         // Create the new file in the external storage
         val timeStamp: String = SimpleDateFormat(

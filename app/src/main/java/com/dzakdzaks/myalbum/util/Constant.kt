@@ -34,6 +34,7 @@ object Constant {
     const val REQUEST_CODE_GO_TO_GALLERY = 100
     const val REQUEST_CODE_GO_TO_PHOTO = 200
     const val REQUEST_CODE_GO_TO_VIDEO = 300
+    const val REQUEST_PERMISSIONS_ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION = 222
 
 
     fun showConfirmationMaterialDialog(

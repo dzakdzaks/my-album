@@ -6,11 +6,15 @@ import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.provider.MediaStore
+import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.viewModels
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
 import androidx.lifecycle.lifecycleScope
@@ -21,6 +25,7 @@ import com.dzakdzaks.myalbum.util.BitmapUtils
 import com.dzakdzaks.myalbum.util.Constant
 import com.dzakdzaks.myalbum.util.ext.*
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.snackbar.Snackbar
 import com.karumi.dexter.Dexter
 import com.karumi.dexter.MultiplePermissionsReport
 import com.karumi.dexter.PermissionToken
@@ -95,7 +100,7 @@ class MainActivity : AppCompatActivity() {
         transitionFab(R.id.end, R.id.start)
         isRotated = false
         isFromWhere = isFromWhereValue
-        permissionCheck(isFromWhere)
+        permissionCheck()
     }
 
     /*todo animation with View.animate*/
@@ -137,7 +142,7 @@ class MainActivity : AppCompatActivity() {
     }*/
     /*todo animation with View.animate*/
 
-    private fun permissionCheck(isFromWhere: String) {
+    private fun permissionCheck() {
         Dexter.withActivity(this)
             .withPermissions(
                 Manifest.permission.READ_EXTERNAL_STORAGE,
@@ -148,10 +153,15 @@ class MainActivity : AppCompatActivity() {
                 override fun onPermissionsChecked(report: MultiplePermissionsReport) {
                     // permissions granted
                     if (report.areAllPermissionsGranted()) {
-                        if (isFromWhere == Constant.TAKE_CAMERA)
-                            showChooserCamera()
-                        else
-                            goToGallery()
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                            if (Environment.isExternalStorageManager()) {
+                                toCameraOrGallery()
+                            } else {
+                                intentToRequestManageAllFileAccess()
+                            }
+                        } else {
+                            toCameraOrGallery()
+                        }
                     }
 
                     // permanent denial of permission
@@ -184,6 +194,13 @@ class MainActivity : AppCompatActivity() {
             .check()
     }
 
+    private fun toCameraOrGallery() {
+        if (isFromWhere == Constant.TAKE_CAMERA)
+            showChooserCamera()
+        else
+            goToGallery()
+    }
+
     private fun showChooserCamera() {
         val items = arrayOf("Photo", "Video")
 
@@ -193,7 +210,6 @@ class MainActivity : AppCompatActivity() {
                 when (which) {
                     0 -> takePhoto()
                     1 -> takeVideo()
-                    else -> takePhoto()
                 }
                 dialog.dismiss()
             }
@@ -202,7 +218,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun goToGallery() {
         val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-        intent.type = "image/* video/*"
+        intent.type = "*/*"
         startActivityForResult(intent, Constant.REQUEST_CODE_GO_TO_GALLERY)
     }
 
@@ -257,7 +273,7 @@ class MainActivity : AppCompatActivity() {
         when (requestCode) {
             Constant.REQUEST_CODE_GO_TO_SETTING -> {
                 if (resultCode == RESULT_OK)
-                    permissionCheck(isFromWhere)
+                    permissionCheck()
             }
             Constant.REQUEST_CODE_GO_TO_GALLERY, Constant.REQUEST_CODE_GO_TO_VIDEO -> {
                 if (resultCode == RESULT_OK) {
@@ -284,6 +300,22 @@ class MainActivity : AppCompatActivity() {
                             BitmapUtils.deleteImageFile(this@MainActivity, currentMediaPath)
                     }
             }
+            Constant.REQUEST_PERMISSIONS_ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    if (Environment.isExternalStorageManager()) {
+                        toCameraOrGallery()
+                    } else {
+                        Snackbar.make(
+                            binding.root,
+                            "Need permission to allow access storage",
+                            Snackbar.LENGTH_INDEFINITE
+                        )
+                            .setAction("Allow") { intentToRequestManageAllFileAccess() }.show()
+                    }
+                } else {
+                    toCameraOrGallery()
+                }
+            }
         }
     }
 
@@ -293,8 +325,12 @@ class MainActivity : AppCompatActivity() {
                 currentMediaBitmap = BitmapUtils.resamplePic(this@MainActivity, currentMediaPath)
                 val rotatedImage = BitmapUtils.getRotateImage(currentMediaPath, currentMediaBitmap)
                 BitmapUtils.deleteImageFile(this@MainActivity, currentMediaPath)
-                val savedImagePath = BitmapUtils.saveImage(this@MainActivity, rotatedImage)
-                viewModel.insert(savedImagePath!!, Constant.TYPE_IMAGE)
+                val savedImagePath = BitmapUtils.saveImage(this@MainActivity, rotatedImage) ?: ""
+                if (savedImagePath != "")
+                    viewModel.insert(savedImagePath, Constant.TYPE_IMAGE)
+                else
+                    Toast.makeText(applicationContext, "File not found.", Toast.LENGTH_SHORT)
+                        .show()
             }
         }
     }
@@ -348,9 +384,25 @@ class MainActivity : AppCompatActivity() {
                 } else {
                     binding.tvNoData.gone()
                     binding.rv.visible()
-                    mainAdapter.addAllData(it)
+                    mainAdapter.submitList(it)
                 }
             }
+        }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.R)
+    private fun intentToRequestManageAllFileAccess() {
+        try {
+            val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
+            val uri = Uri.fromParts("package", packageName, null)
+            intent.data = uri
+            startActivityForResult(
+                intent,
+                Constant.REQUEST_PERMISSIONS_ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION
+            )
+        } catch (e: ActivityNotFoundException) {
+            Toast.makeText(applicationContext, "Activity not found", Toast.LENGTH_SHORT)
+                .show()
         }
     }
 

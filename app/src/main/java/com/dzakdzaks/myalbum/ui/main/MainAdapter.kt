@@ -4,6 +4,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.ViewCompat
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.dzakdzaks.myalbum.data.AlbumEntity
@@ -25,21 +27,8 @@ import com.dzakdzaks.myalbum.util.ext.visible
 class MainAdapter(
     private val onLongClickItem: (AlbumEntity) -> Unit = {},
     private val onClickItem: (AlbumEntity, View) -> Unit = { _, _ -> }
-) : RecyclerView.Adapter<MainViewHolder>() {
+) : ListAdapter<AlbumEntity, MainAdapter.MainViewHolder>(DiffCallback()) {
 
-    private val listOfData: MutableList<AlbumEntity> = mutableListOf()
-
-    fun addAllData(list: List<AlbumEntity>) {
-        listOfData.clear()
-        listOfData.addAll(list)
-        notifyDataSetChanged()
-    }
-
-    fun addData(data: AlbumEntity) {
-        val lastPos = listOfData.size
-        listOfData.add(lastPos, data)
-        notifyItemInserted(lastPos)
-    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MainViewHolder {
         val binding = ItemMainBinding.inflate(LayoutInflater.from(parent.context), parent, false)
@@ -47,39 +36,52 @@ class MainAdapter(
     }
 
     override fun onBindViewHolder(holder: MainViewHolder, position: Int) {
-        val data = listOfData[position]
+        val currentItem = getItem(position)
+        holder.bind(currentItem)
+    }
 
-        holder.binding.apply {
-            if (data.type == Constant.TYPE_VIDEO)
-                iconPlay.visible()
-            else
-                iconPlay.gone()
+    inner class MainViewHolder(private val binding: ItemMainBinding) :
+        RecyclerView.ViewHolder(binding.root) {
 
-            Glide.with(img.context)
-                .load(data.url)
-                .fitCenter()
-                .centerCrop()
-                .into(img)
+        init {
+            binding.apply {
+                img.setOnClickListener {
+                    if (adapterPosition != RecyclerView.NO_POSITION)
+                        onClickItem.invoke(getItem(adapterPosition), img)
+                }
 
-            ViewCompat.setTransitionName(img, data.id.toString())
-
-            img.setOnClickListener {
-                onClickItem.invoke(data, img)
+                img.setOnLongClickListener {
+                    if (adapterPosition != RecyclerView.NO_POSITION)
+                        onLongClickItem.invoke(getItem(adapterPosition))
+                    false
+                }
             }
+        }
 
-            img.setOnLongClickListener {
-                onLongClickItem.invoke(data)
-                false
+        fun bind(albumEntity: AlbumEntity) {
+            binding.apply {
+                if (albumEntity.type == Constant.TYPE_VIDEO)
+                    iconPlay.visible()
+                else
+                    iconPlay.gone()
+
+                Glide.with(img.context)
+                    .load(albumEntity.url)
+                    .fitCenter()
+                    .centerCrop()
+                    .into(img)
+
+                ViewCompat.setTransitionName(img, albumEntity.id.toString())
             }
 
         }
-
-
     }
 
-    override fun getItemCount(): Int = listOfData.size
+    class DiffCallback : DiffUtil.ItemCallback<AlbumEntity>() {
+        override fun areItemsTheSame(oldItem: AlbumEntity, newItem: AlbumEntity) =
+            oldItem.id == newItem.id
 
+        override fun areContentsTheSame(oldItem: AlbumEntity, newItem: AlbumEntity) =
+            oldItem == newItem
+    }
 }
-
-
-class MainViewHolder(val binding: ItemMainBinding) : RecyclerView.ViewHolder(binding.root)
