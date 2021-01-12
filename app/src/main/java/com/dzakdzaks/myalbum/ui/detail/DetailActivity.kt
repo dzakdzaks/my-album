@@ -1,13 +1,16 @@
 package com.dzakdzaks.myalbum.ui.detail
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
 import android.graphics.drawable.Drawable
-import android.net.Uri
 import android.os.Bundle
 import android.view.View
-import android.widget.MediaController
+import android.view.WindowManager
+import android.widget.ImageButton
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.app.ActivityOptionsCompat
 import androidx.core.view.ViewCompat
 import com.bumptech.glide.Glide
@@ -15,29 +18,51 @@ import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
+import com.dzakdzaks.myalbum.R
 import com.dzakdzaks.myalbum.data.AlbumEntity
 import com.dzakdzaks.myalbum.databinding.ActivityDetailBinding
 import com.dzakdzaks.myalbum.util.Constant
-import com.dzakdzaks.myalbum.util.CustomVideoView
 import com.dzakdzaks.myalbum.util.ext.gone
 import com.dzakdzaks.myalbum.util.ext.visible
 
 
-class DetailActivity : AppCompatActivity(), CustomVideoView.PlayPauseListener {
+class DetailActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityDetailBinding
 
     private lateinit var albumEntity: AlbumEntity
     private lateinit var imageTransitionName: String
 
+    private lateinit var exoPlayerHelper: ExoPlayerHelper
+
     override fun onCreate(savedInstanceState: Bundle?) {
+        window.setFlags(
+            WindowManager.LayoutParams.FLAG_FULLSCREEN,
+            WindowManager.LayoutParams.FLAG_FULLSCREEN
+        )
         super.onCreate(savedInstanceState)
         binding = ActivityDetailBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         getBundleExtras()
         initialize()
-        clickable()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (::exoPlayerHelper.isInitialized) {
+            exoPlayerHelper.resumePlayer()
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        if (::exoPlayerHelper.isInitialized) {
+            exoPlayerHelper.pausePlayer()
+            if (isFinishing) {
+                exoPlayerHelper.killPlayer()
+            }
+        }
     }
 
     private fun getBundleExtras() {
@@ -47,28 +72,46 @@ class DetailActivity : AppCompatActivity(), CustomVideoView.PlayPauseListener {
         }
     }
 
+    @SuppressLint("SetTextI18n")
     private fun initialize() {
         if (::albumEntity.isInitialized && ::imageTransitionName.isInitialized) {
             if (albumEntity.type == Constant.TYPE_IMAGE) {
                 ViewCompat.setTransitionName(binding.photoView, imageTransitionName)
-                binding.videoView.gone()
-                binding.photoView.visible()
-                loadImage(albumEntity)
-            } else if (albumEntity.type == Constant.TYPE_VIDEO) {
-                ViewCompat.setTransitionName(binding.videoView, imageTransitionName)
-                binding.photoView.gone()
-                binding.videoView.visible()
-                loadVideo(albumEntity)
-            }
-        }
-    }
 
-    private fun clickable() {
-        binding.iconBack.setOnClickListener {
-            onBackPressed()
-        }
-        binding.iconPlay.setOnClickListener {
-            binding.videoView.start()
+                binding.apply {
+                    exoPlayerView.gone()
+                    photoView.visible()
+
+                    loadImage(albumEntity)
+
+                    iconBack.setOnClickListener { onBackPressed() }
+                }
+
+            } else if (albumEntity.type == Constant.TYPE_VIDEO) {
+                ViewCompat.setTransitionName(binding.exoPlayerView, imageTransitionName)
+
+                binding.apply {
+                    iconBack.gone()
+                    photoView.gone()
+                    exoPlayerView.visible()
+
+                    loadVideo(albumEntity)
+                }
+
+                /*video custom controller*/
+                val tvHeader = findViewById<View>(R.id.header_tv) as AppCompatTextView
+                val toggleInfo = findViewById<View>(R.id.toggleInfo_im) as ImageButton
+                val btnCloseVideo = findViewById<View>(R.id.exo_close) as ImageButton
+
+                tvHeader.text = "Video ${albumEntity.id}"
+                toggleInfo.setOnClickListener { /*todo info media*/ Toast.makeText(
+                    applicationContext,
+                    "Media Info Video",
+                    Toast.LENGTH_SHORT
+                ).show()
+                }
+                btnCloseVideo.setOnClickListener { onBackPressed() }
+            }
         }
     }
 
@@ -102,36 +145,16 @@ class DetailActivity : AppCompatActivity(), CustomVideoView.PlayPauseListener {
     }
 
     private fun loadVideo(entity: AlbumEntity) {
-        val uri: Uri = Uri.parse(entity.url)
-        val mediaController = MediaController(this)
+        exoPlayerHelper = ExoPlayerHelper(binding.exoPlayerView, {
+            Toast.makeText(applicationContext, it.localizedMessage, Toast.LENGTH_SHORT).show()
+        }, { isBuffering ->
+            if (isBuffering)
+                binding.progressBar.visibility = View.VISIBLE
+            else
+                binding.progressBar.visibility = View.GONE
+        })
 
-        binding.videoView.setPlayPauseListener(this)
-        binding.videoView.setVideoURI(uri)
-        binding.videoView.setMediaController(mediaController)
-        mediaController.setAnchorView(binding.videoView)
-
-        val videoWidth: Int = binding.videoView.width
-        val videoHeight: Int = binding.videoView.height
-        val videoProportion = videoWidth.toFloat() / videoHeight.toFloat()
-        val screenWidth = windowManager.defaultDisplay.width
-        val screenHeight = windowManager.defaultDisplay.height
-        val screenProportion = screenWidth.toFloat() / screenHeight.toFloat()
-        val lp = binding.videoView.layoutParams
-
-        if (videoProportion > screenProportion) {
-            lp.width = screenWidth
-            lp.height = (screenWidth.toFloat() / videoProportion).toInt()
-        } else {
-            lp.width = (videoProportion * screenHeight.toFloat()).toInt()
-            lp.height = screenHeight
-        }
-        binding.videoView.layoutParams = lp
-        binding.videoView.start()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        binding.iconPlay.visible()
+        exoPlayerHelper.initializePlayer(entity.url)
     }
 
     companion object {
@@ -153,16 +176,5 @@ class DetailActivity : AppCompatActivity(), CustomVideoView.PlayPauseListener {
             activity.startActivity(intent, options.toBundle())
         }
     }
-
-    override fun onPlayVideo() {
-        supportStartPostponedEnterTransition()
-        binding.iconPlay.gone()
-    }
-
-    override fun onPauseVideo() {
-        supportStartPostponedEnterTransition()
-        binding.iconPlay.visible()
-    }
-
 
 }
