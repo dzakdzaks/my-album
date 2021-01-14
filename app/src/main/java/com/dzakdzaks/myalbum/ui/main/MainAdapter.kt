@@ -45,12 +45,12 @@ class MainAdapter(
 
         init {
             binding.apply {
-                img.setOnClickListener {
+                viewDummy.setOnClickListener {
                     if (adapterPosition != RecyclerView.NO_POSITION)
                         onClickItem.invoke(getItem(adapterPosition), img)
                 }
 
-                img.setOnLongClickListener {
+                viewDummy.setOnLongClickListener {
                     if (adapterPosition != RecyclerView.NO_POSITION)
                         onLongClickItem.invoke(getItem(adapterPosition))
                     false
