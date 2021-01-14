@@ -6,6 +6,8 @@ import android.content.Intent
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.view.View
+import android.view.WindowInsets
+import android.view.WindowInsetsController
 import android.view.WindowManager
 import android.widget.ImageButton
 import android.widget.Toast
@@ -35,11 +37,12 @@ class DetailActivity : AppCompatActivity() {
 
     private lateinit var exoPlayerHelper: ExoPlayerHelper
 
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        Constant.hideSystemUI(this)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
-        window.setFlags(
-            WindowManager.LayoutParams.FLAG_FULLSCREEN,
-            WindowManager.LayoutParams.FLAG_FULLSCREEN
-        )
         super.onCreate(savedInstanceState)
         binding = ActivityDetailBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -145,6 +148,7 @@ class DetailActivity : AppCompatActivity() {
     }
 
     private fun loadVideo(entity: AlbumEntity) {
+        binding.exoPlayerView.keepScreenOn
         exoPlayerHelper = ExoPlayerHelper(binding.exoPlayerView, {
             Toast.makeText(applicationContext, it.localizedMessage, Toast.LENGTH_SHORT).show()
         }, { isBuffering ->

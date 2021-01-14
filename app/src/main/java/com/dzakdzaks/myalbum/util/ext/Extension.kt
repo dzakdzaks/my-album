@@ -1,5 +1,6 @@
 package com.dzakdzaks.myalbum.util.ext
 
+import com.dzakdzaks.myalbum.util.Constant
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -13,7 +14,10 @@ import java.util.*
  * ==================================//==================================
  */
 
-fun Date.toStringFormat(format: String = "yyyy-MM-dd hh:mm:ss", locale: Locale = Locale.getDefault()): String {
+fun Date.toStringFormat(
+    format: String = "yyyy-MM-dd hh:mm:ss",
+    locale: Locale = Locale.getDefault()
+): String {
     val formatter = SimpleDateFormat(format, locale)
     return formatter.format(this)
 }

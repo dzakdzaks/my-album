@@ -27,6 +27,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:resize_mode="fit"
+        android:keepScreenOn="true"
         app:rewind_increment="10000"
         app:show_timeout="5000"
         app:surface_type="surface_view"

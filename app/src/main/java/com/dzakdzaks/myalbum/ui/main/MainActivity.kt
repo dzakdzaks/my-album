@@ -342,8 +342,9 @@ class MainActivity : AppCompatActivity() {
                     it,
                     this@MainActivity
                 )
-                if (path != null && path != "")
+                if (path != null && path != "") {
                     viewModel.insert(path, type)
+                }
             }
 
         }
