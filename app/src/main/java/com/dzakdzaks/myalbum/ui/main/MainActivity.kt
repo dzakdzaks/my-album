@@ -20,7 +20,9 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.lifecycleScope
 import com.dzakdzaks.myalbum.R
 import com.dzakdzaks.myalbum.databinding.ActivityMainBinding
+import com.dzakdzaks.myalbum.ui.camerax.CameraXActivity
 import com.dzakdzaks.myalbum.ui.detail.DetailActivity
+import com.dzakdzaks.myalbum.ui.draw.DrawingActivity
 import com.dzakdzaks.myalbum.util.BitmapUtils
 import com.dzakdzaks.myalbum.util.Constant
 import com.dzakdzaks.myalbum.util.ext.*
@@ -78,6 +80,15 @@ class MainActivity : AppCompatActivity() {
                 transitionFab(R.id.end, R.id.start)
                 false
             }
+        }
+
+        binding.fabAdd.setOnLongClickListener {
+            if (isRotated) {
+                startActivity(Intent(this, CameraXActivity::class.java))
+            } else {
+                startActivity(Intent(this, DrawingActivity::class.java))
+            }
+            false
         }
 
         binding.fabCamera.setOnClickListener {

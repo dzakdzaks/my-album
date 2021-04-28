@@ -8,14 +8,15 @@
     <uses-permission
         android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
         tools:ignore="ScopedStorage" />
+
+    <uses-feature android:name="android.hardware.camera.any" />
+
     <uses-permission android:name="android.permission.CAMERA" />
 
     <uses-feature
         android:name="android.hardware.camera"
-        android:required="true" />
-
-    <!--khusus android 11 untuk intent default app camera -->
-    <!--https://stackoverflow.com/a/63246789-->
+        android:required="true" /> <!-- khusus android 11 untuk intent default app camera -->
+    <!-- https://stackoverflow.com/a/63246789 -->
     <queries>
         <intent>
             <action android:name="android.media.action.IMAGE_CAPTURE" />
@@ -34,9 +35,9 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.MyAlbum">
-
-        <!--android:configChanges="keyboardHidden|orientation|screenSize-->
-        <!--android:configChanges="orientation|screenSize|layoutDirection-->
+        <activity android:name=".ui.camerax.CameraXActivity" />
+        <activity android:name=".ui.draw.DrawingActivity" /> <!-- android:configChanges="keyboardHidden|orientation|screenSize -->
+        <!-- android:configChanges="orientation|screenSize|layoutDirection -->
         <activity
             android:name=".ui.detail.DetailActivity"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize|uiMode"

@@ -79,4 +79,7 @@ dependencies {
     implementation 'com.github.chrisbanes:PhotoView:2.3.0'
 
     implementation 'com.google.android.exoplayer:exoplayer:2.12.2'
+
+    implementation "androidx.camera:camera-view:1.0.0-alpha24"
+    implementation 'com.github.nauhalf:Camerax:0.0.3'
 }
